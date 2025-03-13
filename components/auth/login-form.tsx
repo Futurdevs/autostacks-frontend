@@ -48,13 +48,13 @@ export function LoginForm() {
         password: values.password,
       });
       
-      showToast.success("Login successful!");
+      showToast.success("Login successful!", "login-toast");
       router.push(callbackUrl);
     } catch (error) {
       if (typeof error === "string") {
-        showToast.error(error);
+        showToast.error(error, "login-toast");
       } else {
-        showToast.error("Failed to login. Please try again.");
+        showToast.error("Failed to login. Please try again.", "login-toast");
       }
     } finally {
       setIsLoading(false);

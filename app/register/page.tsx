@@ -56,13 +56,13 @@ export default function RegisterPage() {
         password: values.password,
       });
       
-      showToast.success("Registration successful!");
+      showToast.success("Registration successful!", "registration-toast");
       router.push("/login");
     } catch (error) {
       if (typeof error === "string") {
-        showToast.error(error);
+        showToast.error(error, "registration-toast");
       } else {
-        showToast.error("Failed to register. Please try again.");
+        showToast.error("Failed to register. Please try again.", "registration-toast");
       }
     } finally {
       setIsLoading(false);

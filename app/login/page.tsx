@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import AuthService from "@/lib/auth";
 import { showToast } from "@/lib/toast";
+import { REDIRECT_PARAM } from "@/middlewares/config";
 
 const formSchema = z.object({
   email: z.string().email({
@@ -29,7 +30,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   
   // Get the callback URL from the search params
-  const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
+  const callbackUrl = searchParams.get(REDIRECT_PARAM) || '/dashboard';
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -42,9 +43,9 @@ export default function LoginPage() {
   // Check if user is already authenticated
   useEffect(() => {
     if (AuthService.isAuthenticated()) {
-      router.push('/dashboard');
+      router.push(callbackUrl);
     }
-  }, [router]);
+  }, [router, callbackUrl]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
