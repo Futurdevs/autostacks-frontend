@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Loader2, Search, ExternalLink, Code } from "lucide-react";
+import { ArrowLeft, Loader2, Search, ExternalLink, Code, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +11,7 @@ import { showToast } from "@/lib/toast";
 import { GitHubService, type GitHubInstallation, type GitHubRepository } from "@/lib/github";
 import { DashboardHeader } from "@/components/dashboard/header";
 import { getAuthStatus } from "@/lib/server/server-auth";
+import { useDebounce } from "use-debounce";
 
 interface RepositoriesPageProps {
   params: {
@@ -22,24 +23,68 @@ export default function RepositoriesPage({ params }: RepositoriesPageProps) {
   const router = useRouter();
   const [user, setUser] = useState<{ full_name?: string; email: string } | null>(null);
   const [installation, setInstallation] = useState<GitHubInstallation | null>(null);
-  const [repositories, setRepositories] = useState<GitHubRepository[]>([]);
   const [filteredRepositories, setFilteredRepositories] = useState<GitHubRepository[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery] = useDebounce(searchQuery, 500);
+  
+  // Pagination state
+  const [pagination, setPagination] = useState({
+    total: 0,
+    page: 1,
+    per_page: 12
+  });
 
   const installationId = parseInt(params.installationId, 10);
+
+  const loadRepositories = useCallback(async (id: number, page: number = 1, search?: string) => {
+    try {
+      const filter = {
+        page,
+        per_page: pagination.per_page,
+        search: search || undefined
+      };
+      
+      const paginatedData = await GitHubService.getInstallationRepositories(id, filter);
+      
+      setFilteredRepositories(paginatedData.items);
+      setPagination({
+        total: paginatedData.total,
+        page: paginatedData.page,
+        per_page: paginatedData.per_page
+      });
+    } catch (error) {
+      console.error("Error fetching repositories:", error);
+      showToast.error("Failed to load repositories.", "repositories-toast");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [pagination.per_page]);
+
+  const loadInstallation = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const installationData = await GitHubService.getInstallation(installationId);
+      setInstallation(installationData);
+      loadRepositories(installationId, pagination.page, debouncedSearchQuery);
+    } catch (error) {
+      console.error("Error fetching installation:", error);
+      showToast.error("Failed to load GitHub installation.", "installation-toast");
+      router.push("/dashboard");
+    }
+  }, [installationId, router, loadRepositories, pagination.page, debouncedSearchQuery]);
 
   useEffect(() => {
     const loadUserData = async () => {
       try {
         // Get auth status from server
         const { isAuthenticated, user: userData } = await getAuthStatus();
-        
+
         if (!isAuthenticated || !userData) {
           router.push("/login");
           return;
         }
-        
+
         setUser(userData);
         loadInstallation();
       } catch (error) {
@@ -49,48 +94,29 @@ export default function RepositoriesPage({ params }: RepositoriesPageProps) {
     };
 
     loadUserData();
-  }, [router, installationId]);
+  }, [router, installationId, loadInstallation]);
 
-  const loadInstallation = async () => {
-    setIsLoading(true);
-    try {
-      const installationData = await GitHubService.getInstallation(installationId);
-      setInstallation(installationData);
-      loadRepositories(installationId);
-    } catch (error) {
-      console.error("Error fetching installation:", error);
-      showToast.error("Failed to load GitHub installation.", "installation-toast");
-      router.push("/dashboard");
+  // Effect to handle debounced search
+  useEffect(() => {
+    if (installation) {
+      setPagination(prev => ({ ...prev, page: 1 }));
+      loadRepositories(installationId, 1, debouncedSearchQuery);
     }
-  };
-
-  const loadRepositories = async (id: number) => {
-    try {
-      const repositoriesData = await GitHubService.getInstallationRepositories(id);
-      setRepositories(repositoriesData);
-      setFilteredRepositories(repositoriesData);
-    } catch (error) {
-      console.error("Error fetching repositories:", error);
-      showToast.error("Failed to load repositories.", "repositories-toast");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  }, [debouncedSearchQuery, installationId, loadRepositories, installation]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value.toLowerCase();
     setSearchQuery(query);
-    
-    if (query.trim() === "") {
-      setFilteredRepositories(repositories);
-    } else {
-      const filtered = repositories.filter(
-        repo => 
-          repo.name.toLowerCase().includes(query) || 
-          (repo.description && repo.description.toLowerCase().includes(query))
-      );
-      setFilteredRepositories(filtered);
+    // The actual search is now handled by the useEffect with the debounced value
+  };
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage < 1 || newPage > Math.ceil(pagination.total / pagination.per_page)) {
+      return;
     }
+    
+    setPagination(prev => ({ ...prev, page: newPage }));
+    loadRepositories(installationId, newPage, debouncedSearchQuery);
   };
 
   if (!user || !installation) {
@@ -141,51 +167,80 @@ export default function RepositoriesPage({ params }: RepositoriesPageProps) {
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : filteredRepositories.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredRepositories.map((repo) => (
-              <Card 
-                key={repo.id} 
-                className="border-primary/20 bg-card/50 backdrop-blur-sm hover:shadow-neon-purple transition-shadow duration-300"
-              >
-                <CardHeader className="pb-2">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle className="text-lg">{repo.name}</CardTitle>
-                      <CardDescription className="line-clamp-1">
-                        {repo.description || "No description available"}
-                      </CardDescription>
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredRepositories.map((repo) => (
+                <Card 
+                  key={repo.id} 
+                  className="border-primary/20 bg-card/50 backdrop-blur-sm hover:shadow-neon-purple transition-shadow duration-300"
+                >
+                  <CardHeader className="pb-2">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <CardTitle className="text-lg">{repo.name}</CardTitle>
+                        <CardDescription className="line-clamp-1">
+                          {repo.description || "No description available"}
+                        </CardDescription>
+                      </div>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8"
+                        asChild
+                      >
+                        <Link href={repo.html_url} target="_blank" rel="noopener noreferrer">
+                          <ExternalLink className="h-4 w-4" />
+                          <span className="sr-only">Open in GitHub</span>
+                        </Link>
+                      </Button>
                     </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <div className={`w-2 h-2 rounded-full ${repo.private ? 'bg-amber-500' : 'bg-green-500'}`}></div>
+                      <span>{repo.private ? 'Private' : 'Public'}</span>
+                    </div>
+                  </CardContent>
+                  <CardFooter className="pt-2">
                     <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-8 w-8"
-                      asChild
+                      className="w-full"
+                      onClick={() => router.push(`/dashboard/projects/new?repo=${repo.repository_id}`)}
                     >
-                      <Link href={repo.html_url} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="h-4 w-4" />
-                        <span className="sr-only">Open in GitHub</span>
-                      </Link>
+                      <Code className="mr-2 h-4 w-4" />
+                      Create Project
                     </Button>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <div className={`w-2 h-2 rounded-full ${repo.private ? 'bg-amber-500' : 'bg-green-500'}`}></div>
-                    <span>{repo.private ? 'Private' : 'Public'}</span>
-                  </div>
-                </CardContent>
-                <CardFooter className="pt-2">
-                  <Button 
-                    className="w-full"
-                    onClick={() => router.push(`/dashboard/projects/new?repo=${repo.repository_id}`)}
-                  >
-                    <Code className="mr-2 h-4 w-4" />
-                    Create Project
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
+                  </CardFooter>
+                </Card>
+              ))}
+            </div>
+            
+            {/* Pagination Controls */}
+            {pagination.total > pagination.per_page && (
+              <div className="flex justify-center items-center mt-8 gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(pagination.page - 1)}
+                  disabled={pagination.page === 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                
+                <div className="text-sm">
+                  Page {pagination.page} of {Math.ceil(pagination.total / pagination.per_page)}
+                </div>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(pagination.page + 1)}
+                  disabled={pagination.page >= Math.ceil(pagination.total / pagination.per_page)}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+          </>
         ) : (
           <Card className="border-primary/20 bg-card/50 backdrop-blur-sm">
             <CardHeader>
@@ -205,7 +260,9 @@ export default function RepositoriesPage({ params }: RepositoriesPageProps) {
             {searchQuery && (
               <CardFooter className="flex justify-center">
                 <Button 
-                  onClick={() => setSearchQuery("")}
+                  onClick={() => {
+                    setSearchQuery("");
+                  }}
                   variant="outline"
                 >
                   Clear Search

@@ -35,7 +35,8 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
   }
 
   // Execute the middleware pipeline
-  return middlewareInstance(request, event)
+  const resp = await middlewareInstance(request, event)
+  return resp
 }
 
 // Configure the middleware to run on specific paths
