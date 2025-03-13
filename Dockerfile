@@ -23,6 +23,8 @@ FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+ARG NEXT_PUBLIC_BACKEND_URL
+ARG JWT_SECRET
 
 ENV NEXT_TELEMETRY_DISABLED=1
 
