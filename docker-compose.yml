@@ -5,13 +5,14 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL}
     container_name: autostacks-frontend
     restart: always
     ports:
       - "3020:3000"
     environment:
       - NODE_ENV=production
-      - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL}
       - JWT_SECRET=${JWT_SECRET}
     networks:
       - autostacks-network
