@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { getAuthToken } from './cookies';
 
-const baseURL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+const baseURL = process.env.NEXT_PUBLIC_BACKEND_URL!;
 
 const axiosInstance = axios.create({
   baseURL,
