@@ -57,10 +57,11 @@ export const AuthMiddleware: MiddlewareFactory = (next) => {
 
     // If user is authenticated and trying to access auth pages, redirect to dashboard
     if (isAuthenticated && isAuthPath && REDIRECT_AUTHENTICATED_USER) {
-      const url = new URL(
-        request.nextUrl.searchParams.get(REDIRECT_PARAM) || LOGIN_REDIRECT,
-        request.url
-      );
+      let redirectTo = request.nextUrl.searchParams.get(REDIRECT_PARAM) || LOGIN_REDIRECT;
+      if (redirectTo) {
+        redirectTo = decodeURIComponent(redirectTo);
+      }
+      const url = new URL(redirectTo, request.url);
       return NextResponse.redirect(url);
     }
 
@@ -74,7 +75,7 @@ export const AuthMiddleware: MiddlewareFactory = (next) => {
       url.searchParams.forEach((value, key, parent) => {
         parent.delete(key);
       });
-      const redirectTo = pathname + (query ? encodeURIComponent(`?${query}`) : "");
+      const redirectTo = pathname + (query ? "?" + encodeURIComponent(query) : "");
       url.searchParams.set(REDIRECT_PARAM, redirectTo);
       console.log(`Redirecting to: ${url.toString()}`);
       return NextResponse.redirect(url);
