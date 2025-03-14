@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { LogOut, Menu, X, User, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
@@ -15,9 +14,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { removeAuthToken } from "@/lib/cookies";
 import { showToast } from "@/lib/toast";
-
+import { useLogout } from "@/hooks/auth";
 interface DashboardHeaderProps {
   user: {
     full_name?: string;
@@ -26,15 +24,12 @@ interface DashboardHeaderProps {
 }
 
 export function DashboardHeader({ user }: DashboardHeaderProps) {
-  const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const logout = useLogout();
 
   const handleLogout = () => {
-    // Remove the auth token cookie
-    removeAuthToken();
+    logout();
     showToast.success("Logged out successfully", 'logout-toast');
-    // Redirect to login page
-    router.push("/login");
   };
 
   return (
