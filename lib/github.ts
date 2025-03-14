@@ -6,6 +6,8 @@ import {
   GitHubRepository,
   InstallationUrlResponse,
   PaginatedRepositories,
+  GitHubAuthCallbackParams,
+  GithubCallbackResponse,
 } from "@/types/github";
 
 export type {
@@ -13,6 +15,8 @@ export type {
   GitHubRepository,
   InstallationUrlResponse,
   PaginatedRepositories,
+  GitHubAuthCallbackParams,
+  GithubCallbackResponse,
 };
 
 type InstallationRepositoryFilter = {
@@ -67,14 +71,15 @@ export const GitHubService = {
   },
 
   // Get a new installation URL for the current user
-  getNewInstallationUrl: async (): Promise<InstallationUrlResponse> => {
+  getNewInstallationUrl: async (state?: Record<string, unknown>): Promise<InstallationUrlResponse> => {
     try {
       const loadingToastId = showToast.loading(
         "Generating installation URL...",
         "github-install-toast"
       );
       const response = await axiosInstance.get<InstallationUrlResponse>(
-        "/github/install"
+        "/github/install",
+        { params: { ...state } }
       );
       showToast.dismiss(loadingToastId);
       return response.data;
@@ -104,6 +109,28 @@ export const GitHubService = {
     } catch (error) {
       const errorMessage = handleApiError(error);
       showToast.error(errorMessage, "github-repos-toast");
+      throw errorMessage;
+    }
+  },
+
+  // Handle GitHub callback
+  handleGitHubCallback: async (
+    callbackParams: GitHubAuthCallbackParams
+  ): Promise<GithubCallbackResponse> => {
+    try {
+      const loadingToastId = showToast.loading(
+        "Processing GitHub installation...",
+        "github-callback-toast"
+      );
+      const response = await axiosInstance.post<GithubCallbackResponse>(
+        "/github/callback",
+        callbackParams
+      );
+      showToast.dismiss(loadingToastId);
+      return response.data;
+    } catch (error) {
+      const errorMessage = handleApiError(error);
+      showToast.error(errorMessage, "github-callback-toast");
       throw errorMessage;
     }
   },

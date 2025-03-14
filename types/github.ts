@@ -35,4 +35,18 @@ export interface PaginatedRepositories {
 
 export interface InstallationUrlResponse {
   installation_url: string;
+}
+
+export interface GitHubAuthCallbackParams {
+  code: string;
+  state: string;
+  installation_id: number;
+  setup_action?: string | null;
+}
+
+export interface GithubCallbackResponse {
+  success: boolean;
+  installation_id: number;
+  account_name: string;
+  state: Record<string, unknown>;
 } 
