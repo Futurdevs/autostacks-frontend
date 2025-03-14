@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter} from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -13,8 +13,7 @@ import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import AuthService from "@/lib/auth";
 import { showToast } from "@/lib/toast";
-import { REDIRECT_PARAM } from "@/middlewares/config";
-
+import { useRedirectPath } from "@/hooks/path";
 const formSchema = z.object({
   email: z.string().email({
     message: "Please enter a valid email address.",
@@ -26,11 +25,8 @@ const formSchema = z.object({
 
 export default function LoginPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const redirectPath = useRedirectPath("/dashboard");
   const [isLoading, setIsLoading] = useState(false);
-  
-  // Get the callback URL from the search params
-  const callbackUrl = searchParams.get(REDIRECT_PARAM) || '/dashboard';
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -43,9 +39,9 @@ export default function LoginPage() {
   // Check if user is already authenticated
   useEffect(() => {
     if (AuthService.isAuthenticated()) {
-      router.push(callbackUrl);
+      router.push(redirectPath);
     }
-  }, [router, callbackUrl]);
+  }, [router, redirectPath]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
@@ -57,7 +53,7 @@ export default function LoginPage() {
       });
       
       showToast.success("Login successful!", "login-toast");
-      router.push(callbackUrl);
+      router.push(redirectPath);
     } catch (error) {
       if (typeof error === "string") {
         showToast.error(error, "login-toast");
