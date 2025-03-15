@@ -78,6 +78,8 @@ export default function Page(): JSX.Element {
       </SidebarProvider>
 
       <div className="flex-1 h-full relative">
+        
+
         <FormProvider {...form}>
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-11/12">
             <form>
