@@ -13,7 +13,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
-import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
+import { FormControl, FormField, FormItem } from "@/components/ui/form";
 import { z } from "zod";
 import { InputChat } from "@/types/chat";
 import { zodResolver } from "@hookform/resolvers/zod";
