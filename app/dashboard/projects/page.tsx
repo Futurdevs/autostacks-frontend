@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { InputChat } from "@/types/chat";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
-import { Form, FormProvider, useForm } from "react-hook-form";
+import { Form, FormProvider, SubmitHandler, useForm } from "react-hook-form";
 import { FaBrain, FaPlus } from "react-icons/fa";
 import { z } from "zod";
 
@@ -23,6 +23,7 @@ const FormSchema = z.object({
 
 export default function Page() {
   const [showModal, setShowModal] = useState<boolean>(false);
+  const [messages, setMessages] = useState<string[]>([]);
 
   const form = useForm<InputChat>({
     defaultValues: {
@@ -30,6 +31,11 @@ export default function Page() {
     },
     resolver: zodResolver(FormSchema),
   });
+
+  const onSubmit: SubmitHandler<InputChat> = (data: InputChat) => {
+    setMessages([...messages, data.inputChat]);
+    form.reset();
+  };
 
   return (
     <section>
@@ -58,9 +64,17 @@ export default function Page() {
               </h2>
             </nav>
 
+            <div className="chat-container overflow-y-auto h-3/4 p-4">
+              {messages.map((message, index) => (
+                <div key={index} className="chat-message mb-2 p-2 bg-gray-700 rounded-lg">
+                  {message}
+                </div>
+              ))}
+            </div>
+
             <FormProvider {...form}>
               <Form className="absolute bottom-4 left-1/2 -translate-x-1/2 w-11/12">
-                <form>
+                <form onSubmit={form.handleSubmit(onSubmit)}>
                   <FormField
                     control={form.control}
                     name="inputChat"
