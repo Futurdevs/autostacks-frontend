@@ -12,7 +12,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { FormProvider, useForm } from "react-hook-form";
+import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { z } from "zod";
 import { InputChat } from "@/types/chat";
@@ -37,6 +37,10 @@ export default function Page(): JSX.Element {
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
+  };
+
+  const onSubmit: SubmitHandler<InputChat> = async (data) => {
+    console.log(data);
   };
 
   return (
@@ -82,7 +86,7 @@ export default function Page(): JSX.Element {
 
         <FormProvider {...form}>
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-11/12">
-            <form>
+            <form onSubmit={form.handleSubmit(onSubmit)}>
               <FormField
                 control={form.control}
                 name="inputChat"
