@@ -50,7 +50,7 @@ export default function Page(): JSX.Element {
           chat.id === currentChatId
             ? {
                 ...chat,
-                title: chat.chats.length === 0 ? `${data.inputChat} - ${currentDateTime}` : chat.title,
+                title: chat.chats.length === 0 ? data.inputChat : chat.title,
                 timestamp: chat.chats.length === 0 ? currentDateTime : chat.timestamp,
                 chats: [...chat.chats, { chat: data.inputChat, user: "User" }],
               }
@@ -62,6 +62,11 @@ export default function Page(): JSX.Element {
   };
 
   const createNewChat = () => {
+    const currentChat = chatHistory.find((chat) => chat.id === currentChatId);
+    if (currentChat && currentChat.chats.length === 0) {
+      alert("Current chat is empty. Please add a message before creating a new chat.");
+      return;
+    }
     const newChatId = chatHistory.length + 1;
     setChatHistory([...chatHistory, { id: newChatId, title: "", timestamp: "", chats: [] }]);
     setCurrentChatId(newChatId);
