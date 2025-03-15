@@ -12,21 +12,35 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { FormProvider, useForm } from 'react-hook-form';
+import { Form, FormField, FormItem } from '@/components/ui/form';
+import { z } from 'zod';
+import { InputChat } from '@/types/chat';
+import { zodResolver } from '@hookform/resolvers/zod';
+
+const FormSchema = z.object({
+  inputChat: z.string({required_error: "The input field can't be empty"}).min(2, {message: "Chat can't be less than 2"}),
+})
 
 export default function Page(): JSX.Element {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const form = useForm<InputChat>({
+    defaultValues: {
+      inputChat: '',
+    },
+    resolver: zodResolver(FormSchema),
+  });
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
   return (
-    <section className="h-screen flex">
-      <SidebarProvider className='h-screen w-60'>
-        <main className='w-10 transform -translate-x-24 -translate-y-6'>
-          <SidebarTrigger className={`fixed -mt-5 hover:bg-purple-600 ${isSidebarOpen ? 'ml-72 mt-4' : 'ml-10 mt-4'}`} onClick={toggleSidebar} />
+    <section className="h-screen flex gap-10">
+      <SidebarProvider className='h-screen w-60 flex'>
+          <SidebarTrigger className={`hover:bg-purple-600 w-7 ${isSidebarOpen ? 'ml-64 z-50' : 'ml-10 mt-4'}`} onClick={toggleSidebar} />
           {isSidebarOpen && (
-            <Sidebar className="h-full overflow-auto">
+            <Sidebar className="h-full w-60 overflow-auto">
               <SidebarContent>
                 <SidebarGroup>
                   <SidebarGroupLabel>Chat History</SidebarGroupLabel>
@@ -52,11 +66,16 @@ export default function Page(): JSX.Element {
               </SidebarContent>
             </Sidebar>
           )}
-        </main>
       </SidebarProvider>
 
-      <div className='flex-1 bg-gray-600 h-full w-full'>
-        hekllo
+      <div className='flex-1 h-full'>
+        <FormProvider {...form}>
+          <Form {...form}>
+            <FormField control={form.control} name='inputChat' render={({field}) => (
+              <FormItem {...field} />
+            )} />
+          </Form>
+        </FormProvider>
       </div>
     </section>
   );

@@ -1,3 +1,3 @@
-interface InputChat {
+export interface InputChat {
   inputChat: string;
 }

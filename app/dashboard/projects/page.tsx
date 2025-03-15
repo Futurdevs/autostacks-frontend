@@ -8,6 +8,7 @@ import {
   FormLabel,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { InputChat } from "@/types/chat";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { Form, FormProvider, useForm } from "react-hook-form";
