@@ -24,9 +24,11 @@ export default function Page() {
 
       {showModal && (
         <figure className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black bg-opacity-40 backdrop-blur-lg p-4 text-white shadow-lg h-full w-full z-50 flex items-center justify-center">
-          <section className="z-50 bg-gray-800 w-3/4 h-3/4 rounded-2xl">
+          <section className="z-50 bg-gray-800 w-3/4 h-3/4 rounded-2xl p-8">
             <nav>
-              <FaBrain />
+              <h2 className="font-normal text-white text-xl flex items-center gap-2">
+                <FaBrain className="inline-block text-purple-600" size={28} /> <span>Ask AI</span>
+              </h2>
             </nav>
           </section>
         </figure>
