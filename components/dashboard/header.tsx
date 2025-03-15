@@ -55,6 +55,9 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
           <Link href="/dashboard/contracts" className="hover:text-primary transition-colors">
             Smart Contracts
           </Link>
+          <Link href="/dashboard/chat" className="hover:text-primary transition-colors">
+            Chat
+          </Link>
         </nav>
 
         <div className="flex items-center gap-4">
