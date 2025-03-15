@@ -25,9 +25,9 @@ const FormSchema = z.object({
     .min(2, { message: "Chat can't be less than 2" }),
 });
 
-
 export default function Page(): JSX.Element {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [chat, setChat] = useState<string>("");
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
   const form = useForm<InputChat>({
     defaultValues: {
       inputChat: "",
@@ -40,7 +40,7 @@ export default function Page(): JSX.Element {
   };
 
   const onSubmit: SubmitHandler<InputChat> = async (data) => {
-    console.log(data);
+    setChat(data.inputChat);
   };
 
   return (
@@ -82,7 +82,11 @@ export default function Page(): JSX.Element {
       </SidebarProvider>
 
       <div className="flex-1 h-full relative">
-        
+        <div className="h-5/6 overflow-y-scroll py-10 px-16">
+          {chat && (
+            <p className="right-0 self-end bg-gray-200 w-60 ml-auto">{chat}</p>
+          )}
+        </div>
 
         <FormProvider {...form}>
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-11/12">
