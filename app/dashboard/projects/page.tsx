@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { Form, FormProvider, useForm } from "react-hook-form";
-import { FaBrain } from "react-icons/fa";
+import { FaBrain, FaPlus } from "react-icons/fa";
 import { z } from "zod";
 
 const FormSchema = z.object({
@@ -34,16 +34,16 @@ export default function Page() {
     <section>
       <div>
         <div className="flex items-center justify-between">
-          <h1>Projects</h1>
+          <h1 className="text-2xl font-bold">Projects Section</h1>
           <Button
             className="shadow-neon-purple"
             onClick={() => setShowModal(true)}
           >
-            Create a new project
+            <FaPlus /> Create a new project
           </Button>
         </div>
 
-        <p>Here are the projects you are working on.</p>
+        <p className="mt-10 text-xl">There is currently no available project</p>
       </div>
 
       {showModal && (
