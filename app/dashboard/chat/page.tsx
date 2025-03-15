@@ -1,4 +1,4 @@
-"use client";
+'use client'
 import React, { useState } from "react";
 import {
   SidebarContent,
@@ -28,7 +28,8 @@ const FormSchema = z.object({
 });
 
 export default function Page(): JSX.Element {
-  const [chat, setChat] = useState([{ chat: "", user: "" }]);
+  const [chatHistory, setChatHistory] = useState([{ id: 1, title: "", timestamp: "", chats: [{ chat: "", user: "" }] }]);
+  const [currentChatId, setCurrentChatId] = useState(1);
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
   const form = useForm<InputChat>({
     defaultValues: {
@@ -43,10 +44,34 @@ export default function Page(): JSX.Element {
 
   const onSubmit: SubmitHandler<InputChat> = async (data) => {
     if (data.inputChat.trim() !== "") {
-      setChat([...chat, { chat: data.inputChat, user: "User" }]);
+      const currentDateTime = new Date().toLocaleString();
+      setChatHistory((prevHistory) =>
+        prevHistory.map((chat) =>
+          chat.id === currentChatId
+            ? {
+                ...chat,
+                title: chat.chats.length === 0 ? `${data.inputChat} - ${currentDateTime}` : chat.title,
+                timestamp: chat.chats.length === 0 ? currentDateTime : chat.timestamp,
+                chats: [...chat.chats, { chat: data.inputChat, user: "User" }],
+              }
+            : chat
+        )
+      );
     }
     form.reset();
   };
+
+  const createNewChat = () => {
+    const newChatId = chatHistory.length + 1;
+    setChatHistory([...chatHistory, { id: newChatId, title: "", timestamp: "", chats: [] }]);
+    setCurrentChatId(newChatId);
+  };
+
+  const switchChat = (id: number) => {
+    setCurrentChatId(id);
+  };
+
+  const currentChat = chatHistory.find((chat) => chat.id === currentChatId)?.chats || [];
 
   return (
     <section className="h-screen flex gap-10">
@@ -64,20 +89,21 @@ export default function Page(): JSX.Element {
                 <SidebarGroupLabel>Chat History</SidebarGroupLabel>
                 <SidebarGroupContent>
                   <SidebarMenu>
-                    <SidebarMenuItem>
-                      <SidebarMenuButton asChild className="text-white">
-                        Chat 1
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                    <SidebarMenuItem>
-                      <SidebarMenuButton asChild>Chat 2</SidebarMenuButton>
-                    </SidebarMenuItem>
-                    <SidebarMenuItem>
-                      <SidebarMenuButton asChild>Chat 3</SidebarMenuButton>
-                    </SidebarMenuItem>
-                    <SidebarMenuItem>
-                      <SidebarMenuButton asChild>Chat 4</SidebarMenuButton>
-                    </SidebarMenuItem>
+                    {chatHistory.map((chat) => (
+                      <SidebarMenuItem key={chat.id}>
+                        <SidebarMenuButton
+                          asChild
+                          className={`text-white ${currentChatId === chat.id ? "bg-purple-600" : ""}`}
+                          onClick={() => switchChat(chat.id)}
+                        >
+                          <div>
+                            <span>{chat.title || `Untitled...`}</span>
+                            <br />
+                            <span className="text-xs text-gray-400">{chat.timestamp}</span>
+                          </div>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
                   </SidebarMenu>
                 </SidebarGroupContent>
               </SidebarGroup>
@@ -88,7 +114,7 @@ export default function Page(): JSX.Element {
 
       <div className="flex-1 h-full relative">
         <div className="h-5/6 overflow-y-scroll py-10 px-16">
-          {chat
+          {currentChat
             .filter((message) => message.chat.trim() !== "")
             .map((message, index) => (
               <div key={index} className="mb-4">
@@ -104,7 +130,7 @@ export default function Page(): JSX.Element {
 
         <FormProvider {...form}>
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-11/12 flex items-center gap-2">
-            <Button className="p-6">
+            <Button className="p-6" onClick={createNewChat}>
               <FaPlus />
             </Button>
 
