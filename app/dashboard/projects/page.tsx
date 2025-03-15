@@ -10,7 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { InputChat } from "@/types/chat";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+import { BaseSyntheticEvent, useState } from "react";
 import { Form, FormProvider, SubmitHandler, useForm } from "react-hook-form";
 import { FaBrain, FaPlus } from "react-icons/fa";
 import { z } from "zod";
@@ -32,7 +32,7 @@ export default function Page() {
     resolver: zodResolver(FormSchema),
   });
 
-  const onSubmit: SubmitHandler<InputChat> = (data: InputChat) => {
+  const onSubmit: SubmitHandler<InputChat> = async (data: InputChat) => {
     setMessages([...messages, data.inputChat]);
     form.reset();
   };
@@ -66,32 +66,36 @@ export default function Page() {
 
             <div className="chat-container overflow-y-auto h-3/4 p-4">
               {messages.map((message, index) => (
-                <div key={index} className="chat-message mb-2 p-2 bg-gray-700 rounded-lg">
+                <div
+                  key={index}
+                  className="chat-message mb-2 p-2 bg-gray-700 rounded-lg"
+                >
                   {message}
                 </div>
               ))}
             </div>
 
             <FormProvider {...form}>
-              <Form className="absolute bottom-4 left-1/2 -translate-x-1/2 w-11/12">
-                <form onSubmit={form.handleSubmit(onSubmit)}>
-                  <FormField
-                    control={form.control}
-                    name="inputChat"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel></FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Tell me about your project"
-                            className="bg-gray-800 border border-purple-400 p-6"
-                            {...field}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                </form>
+              <Form
+                className="absolute bottom-4 left-1/2 -translate-x-1/2 w-11/12"
+                onSubmit={form.handleSubmit(onSubmit)}
+              >
+                <FormField
+                  control={form.control}
+                  name="inputChat"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel></FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Tell me about your project"
+                          className="bg-gray-800 border border-purple-400 p-6"
+                          {...field}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
               </Form>
             </FormProvider>
           </section>

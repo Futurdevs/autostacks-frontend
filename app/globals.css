@@ -145,3 +145,26 @@
     @apply bg-background text-foreground;
   }
 }
+
+.chat-container {
+  position: relative;
+}
+
+.fade-top,
+.fade-bottom {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 20px;
+  pointer-events: none;
+}
+
+.fade-top {
+  top: 0;
+  background: linear-gradient(to bottom, rgba(128, 128, 128, 0.5), transparent);
+}
+
+.fade-bottom {
+  bottom: 0;
+  background: linear-gradient(to top, rgba(128, 128, 128, 0.5), transparent);
+}
