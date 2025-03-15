@@ -26,7 +26,7 @@ const FormSchema = z.object({
 });
 
 export default function Page(): JSX.Element {
-  const [chat, setChat] = useState<string>("");
+  const [chat, setChat] = useState([{ chat: "", user: "" }]);
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
   const form = useForm<InputChat>({
     defaultValues: {
@@ -40,7 +40,10 @@ export default function Page(): JSX.Element {
   };
 
   const onSubmit: SubmitHandler<InputChat> = async (data) => {
-    setChat(data.inputChat);
+    if (data.inputChat.trim() !== "") {
+      setChat([...chat, { chat: data.inputChat, user: "User" }]);
+    }
+    form.reset();
   };
 
   return (
@@ -83,9 +86,18 @@ export default function Page(): JSX.Element {
 
       <div className="flex-1 h-full relative">
         <div className="h-5/6 overflow-y-scroll py-10 px-16">
-          {chat && (
-            <p className="right-0 self-end bg-gray-200 w-60 ml-auto">{chat}</p>
-          )}
+          {chat
+            .filter((message) => message.chat.trim() !== "")
+            .map((message, index) => (
+              <div key={index} className="mb-4">
+                <p className="self-start bg-gray-800 w-36 p-4 rounded-lg">
+                  {message.chat}
+                </p>
+                <p className="self-end bg-gray-800 w-36 p-4 rounded-lg ml-auto">
+                  {message.user}
+                </p>
+              </div>
+            ))}
         </div>
 
         <FormProvider {...form}>
