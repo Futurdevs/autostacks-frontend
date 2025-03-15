@@ -1,0 +1,3 @@
+interface InputChat {
+  inputChat: string;
+}
