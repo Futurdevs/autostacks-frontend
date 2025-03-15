@@ -1,14 +1,23 @@
 "use client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
-import { Form, useForm } from "react-hook-form";
+import { Form, FormProvider, useForm } from "react-hook-form";
 import { FaBrain } from "react-icons/fa";
 import { z } from "zod";
 
 const FormSchema = z.object({
-  inputChat: z.string({required_error: "Input field can't be empty"}).min(2, {message: "Chat can't be less than 2"}),
+  inputChat: z
+    .string({ required_error: "Input field can't be empty" })
+    .min(2, { message: "Chat can't be less than 2" }),
 });
 
 export default function Page() {
@@ -18,8 +27,8 @@ export default function Page() {
     defaultValues: {
       inputChat: "",
     },
-    resolver: zodResolver(FormSchema)
-  })
+    resolver: zodResolver(FormSchema),
+  });
 
   return (
     <section>
@@ -48,9 +57,28 @@ export default function Page() {
               </h2>
             </nav>
 
-            <Form {...form}>
-
-            </Form>
+            <FormProvider {...form}>
+              <Form>
+                <form>
+                  <FormField
+                    control={form.control}
+                    name="inputChat"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel></FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Ask me anything"
+                            className="bg-black"
+                            {...field}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </form>
+              </Form>
+            </FormProvider>
           </section>
         </figure>
       )}
