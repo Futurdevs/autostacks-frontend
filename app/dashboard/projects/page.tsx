@@ -68,7 +68,7 @@ export default function Page() {
                         <FormLabel></FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="Ask me anything"
+                            placeholder="Tell me about your project"
                             className="bg-gray-800 border border-purple-400 p-6"
                             {...field}
                           />
