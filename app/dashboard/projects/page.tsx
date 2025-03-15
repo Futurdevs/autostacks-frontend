@@ -1,12 +1,13 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { FaBrain } from "react-icons/fa";
 
 export default function Page() {
   const [showModal, setShowModal] = useState<boolean>(false);
 
   return (
-    <section className="min-h-screen">
+    <section>
       <div>
         <div className="flex items-center justify-between">
           <h1>Projects</h1>
@@ -23,8 +24,10 @@ export default function Page() {
 
       {showModal && (
         <figure className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black bg-opacity-40 backdrop-blur-lg p-4 text-white shadow-lg h-full w-full z-50 flex items-center justify-center">
-          <section className="z-50 bg-white">
-            Hello
+          <section className="z-50 bg-gray-800 w-3/4 h-3/4 rounded-2xl">
+            <nav>
+              <FaBrain />
+            </nav>
           </section>
         </figure>
       )}

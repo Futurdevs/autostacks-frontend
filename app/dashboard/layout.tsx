@@ -25,7 +25,7 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-background relative">
+    <div className="h-screen bg-background relative">
       <DashboardHeader user={user} />
       <main className="container mx-auto py-6 px-4">
         {children}
