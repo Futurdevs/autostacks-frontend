@@ -30,7 +30,7 @@ export default function DashboardLayout({
 
   return (
     <div className="h-screen bg-background relative">
-      {pathname === 'dashboard/chat' && <DashboardHeader user={user} />}
+      {pathname !== '/dashboard/chat' && <DashboardHeader user={user} />}
       <main className={`container${pathname === '/dashboard/chat' ? 'w-full' : 'mx-auto py-3 px-4'}`}>
         {children}
       </main>
