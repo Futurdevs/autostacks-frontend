@@ -23,8 +23,8 @@ export default function Page(): JSX.Element {
   return (
     <section className="h-screen">
       <SidebarProvider>
-        <main className='bg-white h-screen w-10 transform -translate-x-24 -translate-y-6'>
-          <SidebarTrigger className={`fixed -mt-5 ${isSidebarOpen ? 'ml-72 mt-4' : 'ml-10 mt-4'}`} onClick={toggleSidebar} />
+        <main className='h-screen w-10 transform -translate-x-24 -translate-y-6'>
+          <SidebarTrigger className={`fixed -mt-5 hover:bg-purple-600 ${isSidebarOpen ? 'ml-72 mt-4' : 'ml-10 mt-4'}`} onClick={toggleSidebar} />
           {isSidebarOpen && (
             <Sidebar className="h-full overflow-auto mt-0">
               <SidebarContent>
