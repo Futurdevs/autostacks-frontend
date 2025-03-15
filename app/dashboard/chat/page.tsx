@@ -21,12 +21,12 @@ export default function Page(): JSX.Element {
   };
 
   return (
-    <section className="h-screen">
-      <SidebarProvider>
-        <main className='h-screen w-10 transform -translate-x-24 -translate-y-6'>
+    <section className="h-screen flex">
+      <SidebarProvider className='h-screen w-60'>
+        <main className='w-10 transform -translate-x-24 -translate-y-6'>
           <SidebarTrigger className={`fixed -mt-5 hover:bg-purple-600 ${isSidebarOpen ? 'ml-72 mt-4' : 'ml-10 mt-4'}`} onClick={toggleSidebar} />
           {isSidebarOpen && (
-            <Sidebar className="h-full overflow-auto mt-0">
+            <Sidebar className="h-full overflow-auto">
               <SidebarContent>
                 <SidebarGroup>
                   <SidebarGroupLabel>Chat History</SidebarGroupLabel>
@@ -54,6 +54,10 @@ export default function Page(): JSX.Element {
           )}
         </main>
       </SidebarProvider>
+
+      <div className='flex-1 bg-gray-600 h-full w-full'>
+        hekllo
+      </div>
     </section>
   );
 }

@@ -4,6 +4,7 @@ import { Loader2 } from "lucide-react";
 import { DashboardHeader } from "@/components/dashboard/header";
 import { ToastProvider } from "@/components/toast-provider";
 import { useCurrentUser } from "@/hooks/auth";
+import { usePathname } from "next/navigation";
 
 export default function DashboardLayout({
   children,
@@ -11,6 +12,9 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }>) {
   const { user, isLoading } = useCurrentUser();
+  const pathname = usePathname()
+
+  console.log(pathname);
 
   if (isLoading) {
     return (
@@ -26,8 +30,8 @@ export default function DashboardLayout({
 
   return (
     <div className="h-screen bg-background relative">
-      <DashboardHeader user={user} />
-      <main className="container mx-auto py-6 px-4">
+      {pathname === 'dashboard/chat' && <DashboardHeader user={user} />}
+      <main className={`container${pathname === '/dashboard/chat' ? 'w-full' : 'mx-auto py-3 px-4'}`}>
         {children}
       </main>
       <ToastProvider />
