@@ -48,7 +48,7 @@ export default function Page() {
 
       {showModal && (
         <figure className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black bg-opacity-40 backdrop-blur-lg p-4 text-white shadow-lg h-full w-full z-50 flex items-center justify-center">
-          <section className="z-50 bg-gray-800 w-3/4 h-3/4 rounded-2xl px-6 py-4">
+          <section className="z-50 bg-gray-800 w-3/4 h-3/4 rounded-2xl px-6 py-4 relative">
             <nav className="border border-gray-600 p-4 rounded-lg">
               <h2 className="font-normal text-white text-xl flex items-center gap-2">
                 <FaBrain className="text-purple-500" size={28} />{" "}
@@ -58,7 +58,7 @@ export default function Page() {
             </nav>
 
             <FormProvider {...form}>
-              <Form>
+              <Form className="absolute bottom-4 left-1/2 -translate-x-1/2 w-11/12">
                 <form>
                   <FormField
                     control={form.control}
@@ -69,7 +69,7 @@ export default function Page() {
                         <FormControl>
                           <Input
                             placeholder="Ask me anything"
-                            className="bg-black"
+                            className="bg-gray-800 border border-purple-400 p-6"
                             {...field}
                           />
                         </FormControl>
