@@ -18,6 +18,8 @@ import { z } from "zod";
 import { InputChat } from "@/types/chat";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { FaPlus } from "react-icons/fa";
 
 const FormSchema = z.object({
   inputChat: z
@@ -101,8 +103,12 @@ export default function Page(): JSX.Element {
         </div>
 
         <FormProvider {...form}>
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-11/12">
-            <form onSubmit={form.handleSubmit(onSubmit)}>
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-11/12 flex items-center gap-2">
+            <Button className="p-6">
+              <FaPlus />
+            </Button>
+
+            <form onSubmit={form.handleSubmit(onSubmit)} className="flex-1">
               <FormField
                 control={form.control}
                 name="inputChat"
