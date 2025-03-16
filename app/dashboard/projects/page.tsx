@@ -23,7 +23,7 @@ const FormSchema = z.object({
 
 export default function Page() {
   const [showModal, setShowModal] = useState<boolean>(false);
-  const [messages, setMessages] = useState<string[]>([]);
+  const [messages, setMessages] = useState([{ chat: "", user: "" }]);
 
   const form = useForm<InputChat>({
     defaultValues: {
@@ -33,7 +33,7 @@ export default function Page() {
   });
 
   const onSubmit: SubmitHandler<InputChat> = async (data: InputChat) => {
-    setMessages([...messages, data.inputChat]);
+    setMessages([...messages, { chat: "AI Response", user: data.inputChat }]);
     form.reset();
   };
 
@@ -65,14 +65,18 @@ export default function Page() {
             </nav>
 
             <div className="chat-container overflow-y-auto h-3/4 p-4">
-              {messages.map((message, index) => (
-                <div
-                  key={index}
-                  className="chat-message mb-2 p-2 bg-gray-700 rounded-lg"
-                >
-                  {message}
-                </div>
-              ))}
+              {messages
+                .filter((message) => message.chat.trim() !== "")
+                .map((message, index) => (
+                  <div key={index} className="mb-4">
+                    <p className="self-start bg-gray-800 w-36 p-4 rounded-lg">
+                      {message.chat}
+                    </p>
+                    <p className="self-end bg-gray-800 w-36 p-4 rounded-lg ml-auto">
+                      {message.user}
+                    </p>
+                  </div>
+                ))}
             </div>
 
             <FormProvider {...form}>
