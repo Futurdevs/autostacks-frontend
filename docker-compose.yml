@@ -7,6 +7,7 @@ services:
       dockerfile: Dockerfile
       args:
         - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL}
+        - NEXT_PUBLIC_SOCKET_URL=${NEXT_PUBLIC_SOCKET_URL}
     container_name: autostacks-frontend
     restart: always
     ports:
