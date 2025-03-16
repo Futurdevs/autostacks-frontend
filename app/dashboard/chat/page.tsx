@@ -1,164 +1,250 @@
-'use client'
-import React, { useState } from "react";
-import {
-  SidebarContent,
-  Sidebar,
-  SidebarGroup,
-  SidebarGroupLabel,
-  SidebarGroupContent,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
-import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
-import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
-import { z } from "zod";
-import { InputChat } from "@/types/chat";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { FaPlus } from "react-icons/fa";
+"use client";
 
-const FormSchema = z.object({
-  inputChat: z
-    .string({ required_error: "The input field can't be empty" })
-    .min(2, { message: "Chat can't be less than 2" }),
-});
+import { useEffect, useState, useRef, useMemo } from "react";
+import { io, Socket } from "socket.io-client";
+import { conversationService, type Message, type Conversation } from "@/lib/conversation";
+import { showToast } from "@/lib/toast";
+import { useCurrentUser } from "@/hooks/auth";
+import { ChatSidebar } from "./components/ChatSidebar";
+import { ChatMessages } from "./components/ChatMessages";
+import { ChatInput } from "./components/ChatInput";
+import { RenameDialog } from "./components/RenameDialog";
+import { ConnectionStatus } from "./components/ConnectionStatus";
+import { getAuthToken } from "@/lib/cookies";
 
-export default function Page(): JSX.Element {
-  const [chatHistory, setChatHistory] = useState([{ id: 1, title: "", timestamp: "", chats: [{ chat: "", user: "" }] }]);
-  const [currentChatId, setCurrentChatId] = useState(1);
-  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
-  const form = useForm<InputChat>({
-    defaultValues: {
-      inputChat: "",
-    },
-    resolver: zodResolver(FormSchema),
-  });
+interface AgentStatus {
+  node: string;
+  status: string;
+}
 
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
+export default function ChatPage() {
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [inputValue, setInputValue] = useState("");
+  const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const { user } = useCurrentUser();
+  const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
+  const [conversationToRename, setConversationToRename] = useState<Conversation | null>(null);
+  const [newTitle, setNewTitle] = useState("");
+  const socketRef = useRef<Socket | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const [agentStatus, setAgentStatus] = useState<AgentStatus | null>(null);
+  const authToken = useMemo(getAuthToken, []);
+
+  useEffect(() => {
+    // Load conversations
+    const loadConversations = async () => {
+      try {
+        const result = await conversationService.listConversations();
+        setConversations(result.items);
+      } catch (err) {
+        showToast.error("Failed to load conversations", "load-conversations-error");
+        console.error("Error loading conversations:", err instanceof Error ? err.message : String(err));
+      }
+    };
+
+    if (user) {
+      loadConversations();
+    }
+
+    const onConnect = () => {
+      setIsConnected(true);
+      showToast.success("Connected to chat server", "socket-connect");
+    }
+
+    const onDisconnect = () => {
+      setIsConnected(false);
+      showToast.error("Disconnected from chat server", "socket-connect");
+    }
+
+    const onError = (error: Error) => {
+      console.error("Socket error:", error);
+      showToast.error("Connection error", "socket-error");
+    }
+
+    const onMessage = (message: Message) => {
+      console.log("onMessage", message);
+      setMessages((prev) => [...prev, message]);
+      setAgentStatus(null);
+    }
+
+    const onAgentStatus = (status: AgentStatus) => {
+      console.log("onAgentStatus", status);
+      setAgentStatus(status);
+    }
+
+    // Setup WebSocket
+    if (!socketRef.current) {
+      socketRef.current = io(`${process.env.NEXT_PUBLIC_SOCKET_URL}/general`, {
+        transports: ["websocket"],
+        reconnectionAttempts: 2,
+        auth: {
+          token: authToken
+        }
+      });
+
+      socketRef.current.on("connect", onConnect);
+      socketRef.current.on("disconnect", onDisconnect);
+      socketRef.current.on("message", onMessage);
+      socketRef.current.on("error", onError);
+      socketRef.current.on("agent_status", onAgentStatus);
+    }
+
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current.off("connect", onConnect);
+        socketRef.current.off("disconnect", onDisconnect);
+        socketRef.current.off("connect_error", onError);
+        socketRef.current.off("message", onMessage);
+        socketRef.current.off("error", onError);
+        socketRef.current.off("agent_status", onAgentStatus);
+        socketRef.current = null;
+        setIsConnected(false);
+      }
+    };
+  }, [selectedConversation, user, authToken]);
+
+  useEffect(() => {
+    // Load messages when conversation is selected
+    const loadMessages = async () => {
+      if (!selectedConversation) return;
+
+      try {
+        setIsLoading(true);
+        const messages = await conversationService.getConversationMessages(selectedConversation);
+        setMessages(messages);
+      } catch (err) {
+        showToast.error("Failed to load messages", "load-messages");
+        console.error("Error loading messages:", err instanceof Error ? err.message : String(err));
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadMessages();
+  }, [selectedConversation]);
+
+  const handleNewChat = async () => {
+    try {
+      const newConversation = await conversationService.createConversation({
+        title: "New Chat",
+        user_id: user!.id,
+      });
+      setConversations((prev) => [newConversation, ...prev]);
+      setSelectedConversation(newConversation.id);
+    } catch (err) {
+      showToast.error("Failed to create new chat", "create-chat-error");
+      console.error("Error creating chat:", err instanceof Error ? err.message : String(err));
+    }
   };
 
-  const onSubmit: SubmitHandler<InputChat> = async (data) => {
-    if (data.inputChat.trim() !== "") {
-      const currentDateTime = new Date().toLocaleString();
-      setChatHistory((prevHistory) =>
-        prevHistory.map((chat) =>
-          chat.id === currentChatId
-            ? {
-                ...chat,
-                title: chat.chats.length === 0 ? data.inputChat : chat.title,
-                timestamp: chat.chats.length === 0 ? currentDateTime : chat.timestamp,
-                chats: [...chat.chats, { chat: data.inputChat, user: "User" }],
-              }
-            : chat
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inputValue.trim() || !selectedConversation || !socketRef.current || !isConnected) return;
+
+    const newMessage: Omit<Message, "id" | "created_at"> = {
+      conversation_id: selectedConversation,
+      content: inputValue,
+      role: "user",
+    };
+
+    try {
+      // Add the message to the UI immediately
+      setMessages((prev) => [...prev, { ...newMessage, id: Date.now().toString() } as Message]);
+      socketRef.current.emit("query", {
+        conversation_id: selectedConversation,
+        content: inputValue,
+      });
+      setInputValue("");
+    } catch (err) {
+      showToast.error("Failed to send message", "send-message-error");
+      console.error("Error sending message:", err instanceof Error ? err.message : String(err));
+    }
+  };
+
+  const handleRenameConversation = (conversation: Conversation) => {
+    setConversationToRename(conversation);
+    setNewTitle(conversation.title);
+    setIsRenameDialogOpen(true);
+  };
+
+  const handleRenameSubmit = async () => {
+    if (!conversationToRename || !newTitle.trim()) return;
+
+    try {
+      const updatedConversation = await conversationService.renameConversation(
+        conversationToRename.id,
+        { title: newTitle.trim() }
+      );
+      setConversations((prev) =>
+        prev.map((conv) =>
+          conv.id === updatedConversation.id ? updatedConversation : conv
         )
       );
+      showToast.success("Conversation renamed", "rename-success");
+    } catch (err) {
+      showToast.error("Failed to rename conversation", "rename-error");
+      console.error("Error renaming conversation:", err instanceof Error ? err.message : String(err));
+    } finally {
+      setIsRenameDialogOpen(false);
+      setConversationToRename(null);
+      setNewTitle("");
     }
-    form.reset();
   };
 
-  const createNewChat = () => {
-    const currentChat = chatHistory.find((chat) => chat.id === currentChatId);
-    if (currentChat && currentChat.chats.length === 0) {
-      alert("Current chat is empty. Please add a message before creating a new chat.");
-      return;
+  const handleDeleteConversation = async (conversationId: string) => {
+    if (!confirm("Are you sure you want to delete this conversation?")) return;
+
+    try {
+      await conversationService.deleteConversation(conversationId);
+      setConversations((prev) => prev.filter((conv) => conv.id !== conversationId));
+      if (selectedConversation === conversationId) {
+        setSelectedConversation(null);
+        setMessages([]);
+      }
+      showToast.success("Conversation deleted", "delete-success");
+    } catch (err) {
+      showToast.error("Failed to delete conversation", "delete-error");
+      console.error("Error deleting conversation:", err instanceof Error ? err.message : String(err));
     }
-    const newChatId = chatHistory.length + 1;
-    setChatHistory([...chatHistory, { id: newChatId, title: "", timestamp: "", chats: [] }]);
-    setCurrentChatId(newChatId);
   };
-
-  const switchChat = (id: number) => {
-    setCurrentChatId(id);
-  };
-
-  const currentChat = chatHistory.find((chat) => chat.id === currentChatId)?.chats || [];
 
   return (
-    <section className="h-screen flex gap-10">
-      <SidebarProvider className="h-screen w-60 flex">
-        <SidebarTrigger
-          className={`hover:bg-purple-600 w-7 ${
-            isSidebarOpen ? "ml-64 z-50" : "ml-10 mt-4"
-          }`}
-          onClick={toggleSidebar}
-        />
-        {isSidebarOpen && (
-          <Sidebar className="h-full w-60 overflow-auto">
-            <SidebarContent>
-              <SidebarGroup>
-                <SidebarGroupLabel>Chat History</SidebarGroupLabel>
-                <SidebarGroupContent>
-                  <SidebarMenu>
-                    {chatHistory.map((chat) => (
-                      <SidebarMenuItem key={chat.id}>
-                        <SidebarMenuButton
-                          asChild
-                          className={`text-white ${currentChatId === chat.id ? "bg-purple-600" : ""}`}
-                          onClick={() => switchChat(chat.id)}
-                        >
-                          <div>
-                            <span>{chat.title || `Untitled...`}</span>
-                            <br />
-                            <span className="text-xs text-gray-400">{chat.timestamp}</span>
-                          </div>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    ))}
-                  </SidebarMenu>
-                </SidebarGroupContent>
-              </SidebarGroup>
-            </SidebarContent>
-          </Sidebar>
-        )}
-      </SidebarProvider>
+    <div className="flex h-[calc(100vh-4rem)] overflow-hidden">
+      <ChatSidebar
+        conversations={conversations}
+        selectedConversation={selectedConversation}
+        onNewChat={handleNewChat}
+        onSelectConversation={setSelectedConversation}
+        onRenameConversation={handleRenameConversation}
+        onDeleteConversation={handleDeleteConversation}
+      />
 
-      <div className="flex-1 h-full relative">
-        <div className="h-5/6 overflow-y-scroll py-10 px-16">
-          {currentChat
-            .filter((message) => message.chat.trim() !== "")
-            .map((message, index) => (
-              <div key={index} className="mb-4">
-                <p className="self-start bg-gray-800 w-36 p-4 rounded-lg">
-                  {message.chat}
-                </p>
-                <p className="self-end bg-gray-800 w-36 p-4 rounded-lg ml-auto">
-                  {message.user}
-                </p>
-              </div>
-            ))}
+      <div className="flex-1 flex flex-col">
+        <div className="p-4 border-b flex justify-end">
+          <ConnectionStatus isConnected={isConnected} />
         </div>
-
-        <FormProvider {...form}>
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-11/12 flex items-center gap-2">
-            <Button className="p-6" onClick={createNewChat}>
-              <FaPlus />
-            </Button>
-
-            <form onSubmit={form.handleSubmit(onSubmit)} className="flex-1">
-              <FormField
-                control={form.control}
-                name="inputChat"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <Input
-                        placeholder="Tell me about your project"
-                        className="bg-gray-800 border border-purple-400 p-6"
-                        {...field}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-            </form>
-          </div>
-        </FormProvider>
+        <ChatMessages 
+          messages={messages} 
+          agentStatus={agentStatus}
+        />
+        <ChatInput
+          value={inputValue}
+          onChange={setInputValue}
+          onSubmit={handleSendMessage}
+          disabled={!selectedConversation || isLoading || !isConnected}
+        />
       </div>
-    </section>
+
+      <RenameDialog
+        open={isRenameDialogOpen}
+        title={newTitle}
+        onOpenChange={setIsRenameDialogOpen}
+        onTitleChange={setNewTitle}
+        onSubmit={handleRenameSubmit}
+      />
+    </div>
   );
-}
+} 
