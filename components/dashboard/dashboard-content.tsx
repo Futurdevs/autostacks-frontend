@@ -8,7 +8,7 @@ import { showToast } from "@/lib/toast";
 import { GitHubService, type GitHubInstallation } from "@/lib/github";
 import { DashboardHeader } from "@/components/dashboard/header";
 import { InstallationCard } from "@/components/dashboard/installation-card";
-import { getCurrentUser } from "@/lib/server/server-auth";
+import AuthService from "@/lib/auth";
 
 export function DashboardContent() {
   const [user, setUser] = useState<{ full_name?: string; email: string } | null>(null);
@@ -20,7 +20,7 @@ export function DashboardContent() {
     const loadUserData = async () => {
       try {
         // Get user data from server
-        const userData = await getCurrentUser();
+        const userData = await AuthService.getCurrentUser();
         
         if (userData) {
           setUser(userData);

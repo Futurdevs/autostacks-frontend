@@ -1,8 +1,7 @@
-import { User } from "@/lib/auth";
+import AuthService, { User } from "@/lib/auth";
 import { useEffect } from "react";
 import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { getAuthStatus } from "@/lib/server/server-auth";
 import { showToast } from "@/lib/toast";
 import { removeAuthToken } from "@/lib/cookies";
 import { useCurrentURL } from "@/hooks/path";
@@ -31,7 +30,7 @@ export function useCurrentUser() {
     const loadUserData = async () => {
       try {
         // Get auth status from server
-        const { isAuthenticated, user: userData } = await getAuthStatus();
+        const { isAuthenticated, user: userData } = await AuthService.getAuthStatus();
 
         if (!isAuthenticated || !userData) {
           router.push("/login");

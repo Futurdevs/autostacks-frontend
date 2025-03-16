@@ -1,7 +1,7 @@
-import axios, { AxiosError } from 'axios';
-import axiosInstance from './axios';
-import { showToast } from './toast';
-import { setAuthToken, getAuthToken, removeAuthToken } from './cookies';
+import axios, { AxiosError } from "axios";
+import axiosInstance from "./axios";
+import { showToast } from "./toast";
+import { setAuthToken, getAuthToken, removeAuthToken } from "./cookies";
 
 // Types
 export interface LoginRequest {
@@ -44,51 +44,55 @@ interface ApiErrorResponse {
 export const handleApiError = (error: unknown): string => {
   if (axios.isAxiosError(error)) {
     const axiosError = error as AxiosError<ApiErrorResponse>;
-    
+
     // Handle different status codes
     if (axiosError.response) {
       const { status, data } = axiosError.response;
-      
+
       // Authentication errors
       if (status === 401) {
-        return 'Authentication failed. Please log in again.';
+        return "Authentication failed. Please log in again.";
       }
-      
+
       // Validation errors
       if (status === 422 && data.detail) {
         if (Array.isArray(data.detail)) {
-          return data.detail.map((err: ValidationError) => `${err.loc[1]}: ${err.msg}`).join(', ');
+          return data.detail
+            .map((err: ValidationError) => `${err.loc[1]}: ${err.msg}`)
+            .join(", ");
         }
         return data.detail;
       }
-      
+
       // Server errors
       if (status >= 500) {
-        return 'Server error. Please try again later.';
+        return "Server error. Please try again later.";
       }
-      
+
       // Other errors with messages
       if (data.message) {
         return data.message;
       }
-      
+
       if (data.detail) {
-        return typeof data.detail === 'string' ? data.detail : 'Validation error';
+        return typeof data.detail === "string"
+          ? data.detail
+          : "Validation error";
       }
     }
-    
+
     // Network errors
-    if (axiosError.code === 'ECONNABORTED') {
-      return 'Request timed out. Please check your connection.';
+    if (axiosError.code === "ECONNABORTED") {
+      return "Request timed out. Please check your connection.";
     }
-    
+
     if (axiosError.message) {
       return axiosError.message;
     }
   }
-  
+
   // Fallback error message
-  return 'An unexpected error occurred. Please try again.';
+  return "An unexpected error occurred. Please try again.";
 };
 
 // Auth service
@@ -96,58 +100,67 @@ const AuthService = {
   // Register a new user
   register: async (userData: RegisterRequest): Promise<User> => {
     try {
-      const loadingToast = showToast.loading('Creating your account...', 'register-toast');
-      const response = await axiosInstance.post<User>('/auth/register', userData);
+      const loadingToast = showToast.loading(
+        "Creating your account...",
+        "register-toast"
+      );
+      const response = await axiosInstance.post<User>(
+        "/auth/register",
+        userData
+      );
       showToast.dismiss(loadingToast);
-      showToast.success('Account created successfully!', 'register-toast');
+      showToast.success("Account created successfully!", "register-toast");
       return response.data;
     } catch (error) {
       const errorMessage = handleApiError(error);
-      showToast.error(errorMessage, 'register-toast');
+      showToast.error(errorMessage, "register-toast");
       throw error;
     }
   },
-  
+
   // Login user
   login: async (credentials: LoginRequest): Promise<Token> => {
     try {
-      const loadingToast = showToast.loading('Logging in...', 'login-toast');
-      const response = await axiosInstance.post<Token>('/auth/login', credentials);
+      const loadingToast = showToast.loading("Logging in...", "login-toast");
+      const response = await axiosInstance.post<Token>(
+        "/auth/login",
+        credentials
+      );
       showToast.dismiss(loadingToast);
-      
+
       // Store token in cookie
       setAuthToken(response.data.access_token);
-      
-      showToast.success('Logged in successfully!', 'login-toast');
+
+      showToast.success("Logged in successfully!", "login-toast");
       return response.data;
     } catch (error) {
       const errorMessage = handleApiError(error);
-      showToast.error(errorMessage, 'login-toast');
+      showToast.error(errorMessage, "login-toast");
       throw error;
     }
   },
-  
+
   // Logout user
   logout: (): void => {
     removeAuthToken();
-    showToast.success('Logged out successfully', 'logout-toast');
+    showToast.success("Logged out successfully", "logout-toast");
     // Optionally redirect to login page
-    window.location.href = '/login';
+    window.location.href = "/login";
   },
-  
+
   // Check if user is authenticated
   isAuthenticated: (): boolean => {
     return !!getAuthToken();
   },
-  
+
   // Get current user
   getCurrentUser: async (): Promise<User | null> => {
     if (!AuthService.isAuthenticated()) {
       return null;
     }
-    
+
     try {
-      const response = await axiosInstance.get<User>('/users/me');
+      const response = await axiosInstance.get<User>("/users/me");
       return response.data;
     } catch (error) {
       // If token is invalid or expired, logout
@@ -157,6 +170,15 @@ const AuthService = {
       return null;
     }
   },
+
+  getAuthStatus: async (): Promise<{
+    isAuthenticated: boolean;
+    user: User | null;
+  }> => {
+    const isAuth = AuthService.isAuthenticated();
+    const user = isAuth ? await AuthService.getCurrentUser() : null;
+    return { isAuthenticated: isAuth, user };
+  },
 };
 
-export default AuthService; 
+export default AuthService;
