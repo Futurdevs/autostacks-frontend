@@ -1,4 +1,4 @@
-import { Brain, Search, Globe, HelpCircle, MessageSquare } from "lucide-react";
+import { Brain, Search, Globe, HelpCircle, MessageSquare, FileCode2 } from "lucide-react";
 
 interface AgentStatusProps {
   node: string;
@@ -11,6 +11,7 @@ const nodeIcons = {
   "web-search": Globe,
   clarification: HelpCircle,
   conversation: MessageSquare,
+  "smart-contract": FileCode2
 };
 
 export function AgentStatus({ node, status }: AgentStatusProps) {
