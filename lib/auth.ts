@@ -15,6 +15,25 @@ export interface RegisterRequest {
   full_name: string;
 }
 
+export interface GithubOAuthToken {
+  token_expired: boolean;
+  refresh_token_expired: boolean;
+}
+
+export interface GithubOAuthLoginResponse {
+  oauth_login_url: string;
+}
+
+export interface GithubOAuthCallbackParams {
+  code: string;
+  state: string;
+}
+
+export interface GithubOAuthCallbackResponse {
+  success: boolean;
+  state: Record<string, unknown>;
+}
+
 export interface User {
   id: number;
   email: string;
@@ -22,6 +41,7 @@ export interface User {
   is_active: boolean;
   created_at: string;
   updated_at?: string;
+  github_oauth_token: GithubOAuthToken | null;
 }
 
 export interface Token {
@@ -178,6 +198,51 @@ const AuthService = {
     const isAuth = AuthService.isAuthenticated();
     const user = isAuth ? await AuthService.getCurrentUser() : null;
     return { isAuthenticated: isAuth, user };
+  },
+
+  // Get GitHub OAuth URL
+  getGithubOAuthUrl: async (redirectUri: string, expiryMinutes: number = 10): Promise<string> => {
+    try {
+      const loadingToast = showToast.loading("Fetching GitHub authentication URL...", "github-oauth-toast");
+      const response = await axiosInstance.get<GithubOAuthLoginResponse>(
+        `/github/oauth/login`, {
+          params: {
+            redirect_uri: redirectUri,
+            expiry_minutes: expiryMinutes
+          }
+        }
+      );
+      showToast.dismiss(loadingToast);
+      return response.data.oauth_login_url;
+    } catch (error) {
+      const errorMessage = handleApiError(error);
+      showToast.error(errorMessage, "github-oauth-toast");
+      throw error;
+    }
+  },
+
+  // Handle GitHub OAuth callback
+  handleGithubOAuthCallback: async (params: GithubOAuthCallbackParams): Promise<GithubOAuthCallbackResponse> => {
+    try {
+      const loadingToast = showToast.loading("Processing GitHub authentication...", "github-oauth-callback-toast");
+      const response = await axiosInstance.post<GithubOAuthCallbackResponse>(
+        `/github/oauth/callback`, 
+        params
+      );
+      showToast.dismiss(loadingToast);
+      
+      if (response.data.success) {
+        showToast.success("GitHub authentication successful!", "github-oauth-callback-toast");
+      } else {
+        showToast.error("GitHub authentication failed", "github-oauth-callback-toast");
+      }
+      
+      return response.data;
+    } catch (error) {
+      const errorMessage = handleApiError(error);
+      showToast.error(errorMessage, "github-oauth-callback-toast");
+      throw error;
+    }
   },
 };
 

@@ -25,5 +25,8 @@ export const REDIRECT_PARAM = 'next'
 // The path of the login page
 export const LOGIN_PATH = '/login'
 
+// The path where users without valid github oauth token are redirected
+export const PENDING_GITHUB_OAUTH_PATH = '/pending-github-oauth'
+
 // The path of the signup page
 export const SIGNUP_PATH = '/signup'

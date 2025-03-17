@@ -625,6 +625,67 @@
         }
       }
     },
+    "/api/v1/github/oauth/login": {
+      "get": {
+        "tags": [
+          "github"
+        ],
+        "summary": "Github Oauth Login",
+        "description": "Get the oauth login url for the current user.",
+        "operationId": "github_oauth_login_api_v1_github_oauth_login_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "redirect_uri",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri",
+              "minLength": 1,
+              "maxLength": 2083,
+              "title": "Redirect Uri"
+            }
+          },
+          {
+            "name": "expiry_minutes",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10,
+              "title": "Expiry Minutes"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GithubOAuthLoginResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/github/installations": {
       "get": {
         "tags": [
@@ -1108,14 +1169,14 @@
         "tags": [
           "github"
         ],
-        "summary": "Github Auth Callback",
+        "summary": "Github Installation Callback",
         "description": "Handle GitHub App installation callback.",
-        "operationId": "github_auth_callback_api_v1_github_callback_post",
+        "operationId": "github_installation_callback_api_v1_github_callback_post",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/GitHubAuthCallbackParams"
+                "$ref": "#/components/schemas/GitHubInstallationCallbackParams"
               }
             }
           },
@@ -1128,6 +1189,53 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/GithubCallbackResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/github/oauth/callback": {
+      "post": {
+        "tags": [
+          "github"
+        ],
+        "summary": "Github Oauth Callback",
+        "description": "Handle GitHub OAuth callback.",
+        "operationId": "github_oauth_callback_api_v1_github_oauth_callback_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GithubOAuthCallbackParams"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GithubOAuthCallbackResponse"
                 }
               }
             }
@@ -1425,40 +1533,6 @@
         "title": "ConversationUpdate",
         "description": "Schema for updating a conversation"
       },
-      "GitHubAuthCallbackParams": {
-        "properties": {
-          "code": {
-            "type": "string",
-            "title": "Code"
-          },
-          "state": {
-            "type": "string",
-            "title": "State"
-          },
-          "installation_id": {
-            "type": "integer",
-            "title": "Installation Id"
-          },
-          "setup_action": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Setup Action"
-          }
-        },
-        "type": "object",
-        "required": [
-          "code",
-          "state",
-          "installation_id"
-        ],
-        "title": "GitHubAuthCallbackParams"
-      },
       "GitHubInstallation": {
         "properties": {
           "installation_id": {
@@ -1541,6 +1615,40 @@
           "created_at"
         ],
         "title": "GitHubInstallation"
+      },
+      "GitHubInstallationCallbackParams": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "state": {
+            "type": "string",
+            "title": "State"
+          },
+          "installation_id": {
+            "type": "integer",
+            "title": "Installation Id"
+          },
+          "setup_action": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Setup Action"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "state",
+          "installation_id"
+        ],
+        "title": "GitHubInstallationCallbackParams"
       },
       "GitHubRepository": {
         "properties": {
@@ -1657,6 +1765,55 @@
           "state"
         ],
         "title": "GithubCallbackResponse"
+      },
+      "GithubOAuthCallbackParams": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "state": {
+            "type": "string",
+            "title": "State"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "state"
+        ],
+        "title": "GithubOAuthCallbackParams"
+      },
+      "GithubOAuthCallbackResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "state": {
+            "type": "object",
+            "title": "State"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success",
+          "state"
+        ],
+        "title": "GithubOAuthCallbackResponse"
+      },
+      "GithubOAuthLoginResponse": {
+        "properties": {
+          "oauth_login_url": {
+            "type": "string",
+            "title": "Oauth Login Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "oauth_login_url"
+        ],
+        "title": "GithubOAuthLoginResponse"
       },
       "HTTPValidationError": {
         "properties": {
@@ -1824,6 +1981,16 @@
               }
             ],
             "title": "Updated At"
+          },
+          "github_oauth_token": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserGithubOAuthTokenStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",
@@ -1870,6 +2037,24 @@
           "password"
         ],
         "title": "UserCreate"
+      },
+      "UserGithubOAuthTokenStatus": {
+        "properties": {
+          "refresh_token_expired": {
+            "type": "boolean",
+            "title": "Refresh Token Expired"
+          },
+          "token_expired": {
+            "type": "boolean",
+            "title": "Token Expired"
+          }
+        },
+        "type": "object",
+        "required": [
+          "refresh_token_expired",
+          "token_expired"
+        ],
+        "title": "UserGithubOAuthTokenStatus"
       },
       "UserUpdate": {
         "properties": {
