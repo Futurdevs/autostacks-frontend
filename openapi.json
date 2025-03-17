@@ -1280,6 +1280,64 @@
         }
       }
     },
+    "/api/v1/project/new/{conversation_id}": {
+      "post": {
+        "tags": [
+          "project"
+        ],
+        "summary": "Interact With Project Agent",
+        "description": "Interact with the project requirements agent.\nUses the conversation history service to maintain state.",
+        "operationId": "interact_with_project_agent_api_v1_project_new__conversation_id__post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "conversation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Conversation Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectAgentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectAgentResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/": {
       "get": {
         "summary": "Root",
@@ -1892,6 +1950,39 @@
           "items"
         ],
         "title": "PaginatedResponse[GitHubRepository]"
+      },
+      "ProjectAgentRequest": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "title": "ProjectAgentRequest",
+        "description": "Request model for the project agent endpoint"
+      },
+      "ProjectAgentResponse": {
+        "properties": {
+          "response": {
+            "type": "string",
+            "title": "Response"
+          },
+          "is_complete": {
+            "type": "boolean",
+            "title": "Is Complete",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "response"
+        ],
+        "title": "ProjectAgentResponse",
+        "description": "Response model for the project agent endpoint"
       },
       "RegistrationRequest": {
         "properties": {

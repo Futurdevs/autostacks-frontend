@@ -29,7 +29,7 @@ export default async function DashboardLayout({
   return (
     <div className="h-screen bg-background relative">
       <DashboardHeader user={user!} />
-      <main className={`container mx-auto py-3 px-4`}>
+      <main className={`container w-full py-3 px-4`}>
         {children}
       </main>
       <ToastProvider />
