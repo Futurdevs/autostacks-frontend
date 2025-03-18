@@ -17,6 +17,7 @@ import { showToast } from "@/lib/toast";
 import { useCurrentUser } from "@/hooks/auth";
 import axios from "@/lib/axios";
 import { AlertCircle, Sparkles, SendHorizontal, Loader2, User, Bot } from "lucide-react";
+import { Project } from "@/lib/projects";
 
 // Project agent request/response interfaces
 interface ProjectAgentRequest {
@@ -26,6 +27,8 @@ interface ProjectAgentRequest {
 interface ProjectAgentResponse {
   response: string;
   is_complete: boolean;
+  project_id?: string; // ID of the created project, if available
+  project?: Project; // Full project object if available
 }
 
 interface ChatMessage {
@@ -43,6 +46,7 @@ export default function NewProjectPage() {
   const [inputMessage, setInputMessage] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isComplete, setIsComplete] = useState(false);
+  const [projectId, setProjectId] = useState<string | null>(null);
   const { user } = useCurrentUser();
   const router = useRouter();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -125,7 +129,7 @@ export default function NewProjectPage() {
       
       // Send message to the project agent
       const response = await axios.post<ProjectAgentResponse>(
-        `/project/new/${conversationId}`,
+        `/projects/new/${conversationId}`,
         { message: inputMessage } as ProjectAgentRequest
       );
 
@@ -143,14 +147,11 @@ export default function NewProjectPage() {
       // Check if the project creation process is complete
       if (response.data.is_complete) {
         setIsComplete(true);
+        // Store project ID if it's available
+        if (response.data.project_id) {
+          setProjectId(response.data.project_id);
+        }
         showToast.success("Project creation complete!", "project-create");
-        // Add a final message with navigation option
-        setMessages(prevMessages => [...prevMessages, {
-          id: `completion-${Date.now()}`,
-          role: "assistant",
-          content: "Your project has been created successfully! You can now go to your project dashboard to see it.",
-          timestamp: new Date()
-        }]);
       }
     } catch (error) {
       console.error("Error sending message:", error);
@@ -167,8 +168,15 @@ export default function NewProjectPage() {
   };
 
   const goToProject = () => {
-    if (conversationId) {
+    if (projectId) {
+      // If we have a project ID from the backend, use it
+      router.push(`/dashboard/projects/${projectId}`);
+    } else if (conversationId) {
+      // Fall back to conversation ID if no project ID
       router.push(`/dashboard/projects/${conversationId}`);
+    } else {
+      // If neither is available, go to all projects
+      router.push('/dashboard/projects');
     }
   };
 
