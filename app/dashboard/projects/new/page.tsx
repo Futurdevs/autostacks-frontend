@@ -11,7 +11,7 @@ import {
   CardFooter 
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { conversationService } from "@/lib/conversation";
 import { showToast } from "@/lib/toast";
 import { useCurrentUser } from "@/hooks/auth";
@@ -161,8 +161,9 @@ export default function NewProjectPage() {
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && !loading && !isComplete) {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey && !loading && !isComplete) {
+      e.preventDefault(); // Prevent newline
       handleSendMessage();
     }
   };
@@ -254,13 +255,14 @@ export default function NewProjectPage() {
             </Button>
           ) : (
             <div className="flex w-full items-center space-x-2">
-              <Input
+              <Textarea
                 placeholder="Type your message..."
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyDown={handleKeyDown}
                 disabled={loading || !conversationId}
-                className="flex-1"
+                className="flex-1 max-h-32 overflow-y-auto resize-none"
+                autoExpand={true}
               />
               <Button 
                 onClick={handleSendMessage} 
