@@ -64,12 +64,7 @@ export default function ProjectPage() {
           
           // In the future, project features might come from the API
           // For now, we'll set some placeholder features based on the project name
-          setProjectFeatures([
-            `Stacks blockchain integration for ${projectData.name}`,
-            "Smart contract deployment automation",
-            "GitHub repository management",
-            "Continuous integration and deployment"
-          ]);
+          setProjectFeatures(projectData.features);
           
           setLoading(false);
           return;
